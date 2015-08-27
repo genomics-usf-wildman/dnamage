@@ -579,51 +579,41 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 
 
 
-CheckBMIQ = function(beta.v,design.v,pnbeta.v){### pnbeta is BMIQ normalised profile
+CheckBMIQ <- function(beta.v,design.v,pnbeta.v){### pnbeta is BMIQ normalised profile
 
-type1.idx = which(design.v==1);
-type2.idx = which(design.v==2);
+    type1.idx = which(design.v==1);
+    type2.idx = which(design.v==2);
 
-beta1.v = beta.v[type1.idx];
-beta2.v = beta.v[type2.idx];
-pnbeta2.v = pnbeta.v[type2.idx];
-  
+    beta1.v = beta.v[type1.idx];
+    beta2.v = beta.v[type2.idx];
+    pnbeta2.v = pnbeta.v[type2.idx];
+    
 } # end of function CheckBMIQ
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-CalibrateUnitInterval=function(datM,onlyIfOutside=TRUE){
-
-rangeBySample=data.frame(lapply(data.frame(t(datM)),range,na.rm=TRUE))
-minBySample=as.numeric(rangeBySample[1,])
-maxBySample=as.numeric(rangeBySample[2,])
-if (onlyIfOutside) { indexSamples=which((minBySample<0 | maxBySample>1) & !is.na(minBySample) & !is.na(maxBySample))
-   }
-if (!onlyIfOutside) { indexSamples=1:length(minBySample)}
-if ( length(indexSamples)>=1 ){
-for ( i in indexSamples) {
-y1=c(0.001,0.999) 
-x1=c(minBySample[i],maxBySample[i])
-lm1=lm( y1 ~ x1 )
-intercept1=coef(lm1)[[1]]
-slope1=coef(lm1)[[2]]
-datM[i,]=intercept1+slope1*datM[i,]
-} # end of for loop
-}
-datM
+CalibrateUnitInterval <- function(datM,onlyIfOutside=TRUE){
+    
+    rangeBySample=data.frame(lapply(data.frame(t(datM)),range,na.rm=TRUE))
+    minBySample=as.numeric(rangeBySample[1,])
+    maxBySample=as.numeric(rangeBySample[2,])
+    if (onlyIfOutside) {
+        indexSamples=which((minBySample<0 | maxBySample>1) &
+                               !is.na(minBySample) & !is.na(maxBySample))
+    }
+    if (!onlyIfOutside) {
+        indexSamples=1:length(minBySample)
+    }
+    if ( length(indexSamples)>=1 ){
+        for ( i in indexSamples) {
+            y1=c(0.001,0.999) 
+            x1=c(minBySample[i],maxBySample[i])
+            lm1=lm( y1 ~ x1 )
+            intercept1=coef(lm1)[[1]]
+            slope1=coef(lm1)[[2]]
+            datM[i,]=intercept1+slope1*datM[i,]
+        } # end of for loop
+    }
+    datM
 } #end of function for calibrating to [0,1]
 
 
