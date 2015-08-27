@@ -25,31 +25,48 @@ require(RPMM);
 
 
 
-betaEst2=function (y, w, weights) 
-{
-    yobs = !is.na(y)
+##' Estimate the best log(a,b) parameters for the beta estimation
+##'
+##' .. content for \details{} ..
+##' @title betaEst2
+##' @param y 
+##' @param w 
+##' @param weights 
+##' @return 
+##' @author Steve Horvath
+betaEst2 <- function (y, w, weights)  {
+    yobs <- !is.na(y)
     if (sum(yobs) <= 1) 
         return(c(1, 1))
+    ## remove NA observations
     y = y[yobs]
     w = w[yobs]
     weights = weights[yobs]
-    N = sum(weights * w)
-    p = sum(weights * w * y)/N
-    v = sum(weights * w * y * y)/N - p * p
-    logab = log(c(p, 1 - p)) + log(pmax(1e-06, p * (1 - p)/v - 
-        1))
+    N <- sum(weights * w)
+    p <- sum(weights * w * y)/N
+    v <- sum(weights * w * y * y)/N - p * p
+    logab <- log(c(p, 1 - p)) +
+        log(pmax(1e-06, p * (1 - p)/v - 1))
     if (sum(yobs) == 2) 
         return(exp(logab))
-    opt = try(optim(logab, betaObjf, ydata = y, wdata = w, weights = weights, 
-        method = "Nelder-Mead",control=list(maxit=50) ), silent = TRUE)
+    ## optimize the beta maximum likelihood function using the
+    ## Nelder-Mead method (which is also the default) with a maximum
+    ## of 5 iterations
+    opt <- try(optim(logab, betaObjf,
+                     ydata = y,
+                     wdata = w,
+                     weights = weights, 
+                     method = "Nelder-Mead",
+                     control=list(maxit=50) ),
+               silent = TRUE)
     if (inherits(opt, "try-error")) 
         return(c(1, 1))
     exp(opt$par)
-} # end of function betaEst
+}
 
 
 
-blc2=function (Y, w, maxiter = 25, tol = 1e-06, weights = NULL, verbose = TRUE) 
+blc2 <- function (Y, w, maxiter = 25, tol = 1e-06, weights = NULL, verbose = TRUE) 
 {
     Ymn = min(Y[Y > 0], na.rm = TRUE)
     Ymx = max(Y[Y < 1], na.rm = TRUE)
