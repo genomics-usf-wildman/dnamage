@@ -3,6 +3,8 @@
 # and whose first column reports the CpG identifier
 # and whose remaining columns corresponds to samples (e.g. Illumina arrays).
 
+library("impute")
+
 ##' Estimation of DNAm Age
 ##'
 ##' .. content for \details{} ..
@@ -17,7 +19,7 @@
 ##' @param meanXChromosome 
 ##' @return 
 ##' @author Steve Horvath
-estimate.dnam.age <- function(data,goldstandard="probeAnnotation21kdatMethUsed.csv",dat.clock="AdditionalFile3.csv",trafo=function(x,adult.age=20){x <- (x+1)/(1+adult.age); ifelse(x<=1,log(x),x-1)},anti.trafo=function(x,adult.age=20){ifelse(x<0,(1+adult.age)*exp(x)-1,(1+adult.age)*x+adult.age)},fastImputation=FALSE,meanXchromosome=NULL) {
+estimate.dnam.age <- function(data,goldstandard="probeAnnotation21kdatMethUsed.csv",dat.clock="AdditionalFile3.csv",trafo=function(x,adult.age=20){x <- (x+1)/(1+adult.age); ifelse(x<=1,log(x),x-1)},anti.trafo=function(x,adult.age=20){ifelse(x<0,(1+adult.age)*exp(x)-1,(1+adult.age)*x+adult.age)},fastImputation=FALSE,normalizeData=TRUE,alwaysImpute=FALSE,meanXchromosome=NULL) {
     ## if goldstandard is a character or a connection it must be a
     ## filename; read it.
     if (inherits(goldstandard,"connection") ||
@@ -43,9 +45,14 @@ estimate.dnam.age <- function(data,goldstandard="probeAnnotation21kdatMethUsed.c
     table(noMissingPerSample)
 
     nSamples <- nrow(datMethUsed)
-    
-    ##STEP 2: Imputing 
-    if (! fastImputation & nSamples>1 &
+
+    ##STEP 2: Imputing
+    if (alwaysImpute) {
+        dimnames1=dimnames(datMethUsed)
+        capture.output(datMethUsed <- data.frame(t(impute.knn(t(datMethUsed))$data)),
+                       file="/dev/null")
+        dimnames(datMethUsed)=dimnames1
+    } else if (! fastImputation & nSamples>1 &
         max(noMissingPerSample,na.rm=TRUE)<3000 ){
 
         ## run the following code if there is at least one missing
@@ -85,22 +92,18 @@ estimate.dnam.age <- function(data,goldstandard="probeAnnotation21kdatMethUsed.c
     ## operation.
 
     if (normalizeData ){
+        rownames(goldstandard) <- goldstandard$Name
         datMethUsedNormalized <-
-            BMIQcalibration(datM=datMethUsed,
+            BMIQcalibration(datM=datMethUsed[,as.character(goldstandard$Name)],
                             goldstandard.beta=goldstandard$goldstandard2,
                             plots=FALSE)
-    }
-    if (!normalizeData ){
-        datMethUsedNormalized <- datMethUsed
+    } else { 
+       datMethUsedNormalized <- datMethUsed
     }
     rm(datMethUsed); gc()
 
-    print(dat.clock[1:5,])
-
-
-
     ## STEP 4: Predict age and create a data frame for the output (referred to as datout)
-    selectCpGsClock=is.elemenqt(dimnames(datMethUsedNormalized)[[2]],
+    selectCpGsClock=is.element(dimnames(datMethUsedNormalized)[[2]],
         as.character(dat.clock$CpGmarker[-1]))
     if ( sum( selectCpGsClock) < dim(dat.clock)[[1]]-1 ) {
         stop(paste0("The CpGs listed in column 1 of the input data did ",
