@@ -206,9 +206,9 @@ BMIQcalibration <- function(datM,goldstandard.beta,nL=3,doH=TRUE,nfit=20000,th1.
 
     
     ## BETA 2
-    datM <- 
+    result <- 
         foreach (ii=1:dim(datM)[[1]],.combine=rbind) %dopar%
-    ({
+    {
         print(paste("ii=",ii))
         flush.console()
         sampleID=ii
@@ -349,8 +349,11 @@ BMIQcalibration <- function(datM,goldstandard.beta,nL=3,doH=TRUE,nfit=20000,th1.
             points(d2n.o$x,d2n.o$y,col="blue",type="l");
             legend(x=0.5,y=ymax,legend=c("type1","type2","type2-BMIQ"),bty="n",fill=c("red","black","blue"));
         }
-    })
-    datM
+        nbeta2.v
+
+    }
+    dimnames(result) <- dimnames(datM)
+    result
 } # end of function BMIQcalibration
 
 
