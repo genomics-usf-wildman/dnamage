@@ -22,6 +22,7 @@
 
 
 require(RPMM);
+library("foreach")
 
 
 
@@ -203,9 +204,13 @@ BMIQcalibration <- function(datM,goldstandard.beta,nL=3,doH=TRUE,nfit=20000,th1.
         mod1M = d1M.o$x[which.max(d1M.o$y)]
     }
 
+    
     ## BETA 2
-    for (ii in 1:dim(datM)[[1]] ){
-        printFlush(paste("ii=",ii))
+    datM <- 
+        foreach (ii=1:dim(datM)[[1]],.combine=rbind) %dopar%
+    ({
+        print(paste("ii=",ii))
+        flush.console()
         sampleID=ii
         beta2.v = as.numeric(datM[ii,])
         
@@ -344,9 +349,7 @@ BMIQcalibration <- function(datM,goldstandard.beta,nL=3,doH=TRUE,nfit=20000,th1.
             points(d2n.o$x,d2n.o$y,col="blue",type="l");
             legend(x=0.5,y=ymax,legend=c("type1","type2","type2-BMIQ"),bty="n",fill=c("red","black","blue"));
         }
-
-        datM[ii,]= nbeta2.v ;
-    } # end of for (ii=1 loop
+    })
     datM
 } # end of function BMIQcalibration
 
